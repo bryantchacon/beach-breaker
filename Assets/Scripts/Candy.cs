@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Candy : MonoBehaviour
 {
-    private static Color selectedColor = new Color(0.5f, 0.5f, 0.5f, 1.0f); //static significa que la variable estara en cada uno de los caramelos, y private que solo uno de ellos usara el valor que tenga
+    private static Color selectedColor = new Color(0.5f, 0.5f, 0.5f, 1.0f); //static significa que la variable sera compartida por todos los candy, o sea, que su valor sera el mismo en cada uno de los caramelos, y private que solo cada uno de ellos usara el valor que tenga
     private static Candy previousSelected = null; //Se refiere al primer candy seleccionado
 
     private SpriteRenderer spriteRenderer; //Variable que hace referencia a un componente del mismo game object en el que esta este script, cuando es asi, la variable siempre sera private. NOTA: Siempre que haya una variable asi, se inicializa en el Awake()
@@ -39,7 +39,7 @@ public class Candy : MonoBehaviour
         previousSelected = null;
     }
 
-    private void OnMouseDown() //Funcion de unity. Al hacer tap/clic en el candy(este game object)...
+    private void OnMouseDown() //Funcion de unity. Al hacer tap/clic en este candy...
     {
         if (spriteRenderer.sprite == null || BoardManager.sharedInstance.isShifting) //... si donde se hace tap/clic no hay imagen o se estan intercambiando los candys...
         {
@@ -58,11 +58,10 @@ public class Candy : MonoBehaviour
                 SelectCandy(); //... se selecciona este candy al darle tap/clic al mismo...
             }
             else //Si no, si previousSelected si tiene algo, o sea, si hay un candy seleccionado, pero se le da clic a otro...
-            {
-                //EL CANSWIPE EN ESTE IF MAS SU ELSE ECHAN A PERDER EL CODIGO
-                if (CanSwipe()) //... si se puede intercambiar por alguno de los que lo rodean segun la lista donde se guardan(GetAllNeighbors())...
+            {                
+                if (CanSwipe()) //... si segun CanSwipe() el primero seleccionado esta en la lista de los que rodean el segundo seleccionado, o sea, esta a lado de el...
                 {
-                    SwapSprite(previousSelected); //... intercambia el sprite de los candys recibiendo como parametro el previousSelected, o sea, el primer candy seleccionado, esta funcion se activa al darle clic/tap al segundo candy...
+                    SwapSprite(previousSelected); //... intercambia el sprite de los candys recibiendo como parametro el previousSelected, o sea, el primer candy seleccionado, esta funcion se activa al darle clic/tap al segundo candy(SwapSprite primero checa que el segundo seleccionado no sea igual al primero seleccionado para asi poder hacer el swipe)...
                     previousSelected.DeselectCandy(); //... y el primer candy seleccionado se deselecciona
                 }
                 else //Si no, si ninguno se puede intercambiar por el, segun la lista donde seguarda(GetAllNeighbors()) o por que los caramelos estan en las esquinas que rodean al candy o lejos de el...
@@ -93,7 +92,7 @@ public class Candy : MonoBehaviour
         this.id = tempId; //El id de este candy(el segundo seleccionado), sera el del primero, guardado en la variable tempId        
     }
 
-    //NOTA: Antes del siguiente codigo para evitar que el raycast identifique primero al propio candy, o sea, una autocolision, se va a Edit -> Project Settings -> Physics 2D y se desactiva la casilla "Queries Start in Colliders"
+    //NOTA: Antes del siguiente codigo, para evitar que el raycast identifique primero al propio candy, o sea, una autocolision, se va a Edit -> Project Settings -> Physics 2D y se desactiva la casilla "Queries Start in Colliders"
     private GameObject GetNeighbor(Vector2 direction) //Funcion que obtiene el vecino, con direction(variable local y 2D por Vector2) como parametro de la direccion en la que se buscara. Debido a su tipo de dato, la funcion retornara un game object
     {
         RaycastHit2D hit = Physics2D.Raycast(this.transform.position, direction); //Traza un rayo desde este candy en determinada direccion y en la variable hit guarda(por su tipo de dato) el collider del candy que detecte
@@ -112,7 +111,7 @@ public class Candy : MonoBehaviour
     {
         List<GameObject> neighbors = new List<GameObject>(); //Variable de la lista de los candys vecinos que guardara, se declara vacia al inicio
 
-        foreach (Vector2 direction in adjacentDirections) //Para cada direction(variable local) en cada adjacentDirections(enum tipo array 2D en este script). NOTA: En los foreach, la primer variable de los parametros es local, y se refiere al singular de la segunda variable, que sera plural, o sea, que contenga varios elementos
+        foreach(Vector2 direction in adjacentDirections) //Para cada direction(variable local) en cada adjacentDirections(enum tipo array 2D en este script). NOTA: En los foreach, la primer variable de los parametros es local, y se refiere al singular de la segunda variable, que sera plural, o sea, que contenga varios elementos
         {
             neighbors.Add(GetNeighbor(direction)); //Ejecuta la funcion GetNeighbor()(con el direction de esta funcion como parametro), y agrega a la lista el candy vecino que encuentre en cada direccion
         }
@@ -120,9 +119,8 @@ public class Candy : MonoBehaviour
         return neighbors; //Y retorna la lista de game objects de neighbors
     }
     
-    //ESTO NO FUNCIONA
     private bool CanSwipe() //Funcion que indica con true o false si los candys se pueden intercambiar
     {
-        return GetAllNeighbors().Contains(previousSelected.gameObject); //Checa si la lista que retorna GetAllNeighbors() contiene el candy actualmente seleccionado, si si lo contiene retorna true, si no, false
+        return GetAllNeighbors().Contains(previousSelected.gameObject); //Checa si la lista que retorna GetAllNeighbors() contiene el primer candy seleccionado, si si lo contiene retorna true, si no, false
     }
 }

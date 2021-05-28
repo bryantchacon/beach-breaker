@@ -322,7 +322,7 @@ MonoBehaviour:
   - {fileID: -6294263568043735178, guid: 139881e415fbb8d41933505705bbd80c, type: 3}
   - {fileID: 4328965457779499785, guid: 139881e415fbb8d41933505705bbd80c, type: 3}
   - {fileID: 6753843825899217659, guid: 139881e415fbb8d41933505705bbd80c, type: 3}
-  currentCandy: {fileID: 8551759171940145958, guid: 0ad8fecefc28ec64e8cf6d1d001ac266,
+  currentCandy: {fileID: 1572951377979936186, guid: 0ad8fecefc28ec64e8cf6d1d001ac266,
     type: 3}
   xSize: 8
   ySize: 12

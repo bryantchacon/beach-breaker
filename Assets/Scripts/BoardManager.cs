@@ -27,7 +27,7 @@ public class BoardManager : MonoBehaviour
             Destroy(gameObject); //Esto es por si por error hay mas de 1, solo funcione el que llego primero y los demas son destruidos
         }
 
-        Vector2 offset = currentCandy.GetComponent<BoxCollider>().size; //offset es la distancia entre cada caramelo hacia arriba y hacia abajo, y su valor sera el alto y ancho del currentCandy, el cual se sabe por .size por medio de la obtencion de su BoxCollider, es Vector2 porque los datos son valores en "x" y "y"
+        Vector2 offset = currentCandy.GetComponent<BoxCollider2D>().size; //offset es la distancia entre cada caramelo hacia arriba y hacia abajo, y su valor sera el alto y ancho del currentCandy, el cual se sabe por .size por medio de la obtencion de su BoxCollider, es Vector2 porque los datos son valores en "x" y "y"
         CreateInitialBoard(offset);
     }
 
