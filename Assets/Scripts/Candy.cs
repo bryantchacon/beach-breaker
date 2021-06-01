@@ -62,7 +62,9 @@ public class Candy : MonoBehaviour
                 if (CanSwipe()) //... si segun CanSwipe() el primero seleccionado esta en la lista de los que rodean el segundo seleccionado, o sea, esta a lado de el...
                 {
                     SwapSprite(previousSelected); //... intercambia el sprite de los candys recibiendo como parametro el previousSelected, o sea, el primer candy seleccionado, esta funcion se activa al darle clic/tap al segundo candy(SwapSprite primero checa que el segundo seleccionado no sea igual al primero seleccionado para asi poder hacer el swipe)...
-                    previousSelected.DeselectCandy(); //... y el primer candy seleccionado se deselecciona
+                    previousSelected.FindAllMatches(); //... busca y elimina los candys que hagan match si el PRIMERO seleccionado es el que lo provoca
+                    previousSelected.DeselectCandy(); //... el primer candy seleccionado se deselecciona
+                    FindAllMatches(); //... busca y elimina los candys que hagan match si el SEGUNDO seleccionado es el que lo provoca        
                 }
                 else //Si no, si ninguno se puede intercambiar por el, segun la lista donde seguarda(GetAllNeighbors()) o por que los caramelos estan en las esquinas que rodean al candy o lejos de el...
                 {
@@ -122,5 +124,63 @@ public class Candy : MonoBehaviour
     private bool CanSwipe() //Funcion que indica con true o false si los candys se pueden intercambiar
     {
         return GetAllNeighbors().Contains(previousSelected.gameObject); //Checa si la lista que retorna GetAllNeighbors() contiene el primer candy seleccionado, si si lo contiene retorna true, si no, false
+    }
+
+    private List<GameObject> FindMatch(Vector2 direction) //Funcion para encontrar coincidencias de candys, guardarlos y retornar una lista que los contenga, se llama en ClearMatch(). El parametro es la direccion en un solo sentido en la que se buscaran los vecinos(el parametro que se le pasa es por medio de ClearMatch al especificarlos en las variables bools de FindAllMatches)
+    {
+        List<GameObject> matchingCandies = new List<GameObject>(); //Lista vacia donde se guardaran las coincidencias
+
+        RaycastHit2D hit = Physics2D.Raycast(this.transform.position, direction); //Detecta y guarda el game object con el que choca el raycast
+
+        while (hit.collider != null && hit.collider.GetComponent<SpriteRenderer>().sprite == spriteRenderer.sprite) //Mientras haya detectado un collider y el sprite de ese sea igual al de este, o sea, que hay un candy vecino y ese candy tiene la misma imagen que este...
+        {
+            matchingCandies.Add(hit.collider.gameObject); //... agrega el game object del candy detectado a la lista matchingCandies...
+            hit = Physics2D.Raycast(hit.collider.transform.position, direction); //... y vuelve a trazar un rayo pero esta vez desde el candy detectado(el vecino) para detectar si hay otro candy ugual, usando la misma variable hit, porque esta se consulta en el while
+        }
+        
+        return matchingCandies; //Devuelve la lista de los candys que coinciden
+    }
+
+    private bool ClearMatch(Vector2[] directions) //"Elimina" los candys que coincidan(desactiva sus sprites), retornara true o false y por parametro se le pasa un array de direcciones 2d(referente a uno de los 4 puntos cardinales, los parametros se le pasan al usar ClearMatch() en las variables bools de la funcion FindAllMatches)
+    {
+        List<GameObject> matchignCandies = new List<GameObject>(); //Lista donde se guardaran los candys que coincidan. NOTA: No importa que sea igual a la de FindMatch() porque estan en funciones diferentes
+
+        foreach (Vector2 direction in directions) //Para cada direction en directions...
+        {
+            matchignCandies.AddRange(FindMatch(direction)); //Agrega a matchignCandies la lista de candys encontrados que devuelve FindMatch
+        }
+
+        if (matchignCandies.Count >= BoardManager.MinNeighborCandiesToMatch) //Si la cantidad de elementos en matchignCandies es mayor o igual a MinNeighborCandiesToMatch en BoardManager...
+        {
+            foreach (GameObject candy in matchignCandies) //Para cada candy en matchignCandies...
+            {
+                candy.GetComponent<SpriteRenderer>().sprite = null; //Obtiene el componente SpriteRenderer de cada candy y lo desactiva
+            }
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public void FindAllMatches() //Activa el encontrar y eliminar las coincidencias de caramelos empezando por usar aqui la funcion ClearMatch() y dentro de ella la funcion FindMatch(). Esta funcion se activa desde cualquiera de los dos candys que hacen swipe
+    {
+        if (spriteRenderer.sprite == null) //Si el segundo caramelo seleccionado no tiene imagen...
+        {
+            return; //... no hara nada
+        }
+
+        bool hMatch = ClearMatch(new Vector2[2] { Vector2.left, Vector2.right }); //Busca y elimina los caramelos a los lados, y si lo hace retorna true
+
+        bool vMatch = ClearMatch(new Vector2[2] { Vector2.up, Vector2.down }); //Busca y elimina los caramelos arriba y abajo, y si lo hace retorna true
+
+        if (hMatch || vMatch) //Si cualquiera de los dos o ambos retornan true, o sea, si se eliminan candys en cualquiera de las direcciones o en ambas...
+        {
+            spriteRenderer.sprite = null; //... tambien desactiva el sprite del candy que hace match...
+            StopCoroutine(BoardManager.sharedInstance.FindNullCandies()); //... por si acaso esta activa detiene la corutina que busca y baja los candys que quedan arriba de los que se eliminaron...
+            StartCoroutine(BoardManager.sharedInstance.FindNullCandies()); //... y la inicia de nuevo para que vaya encontrando matches en otros lados al ir bajando los candys
+        }
     }
 }

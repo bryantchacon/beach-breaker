@@ -10,11 +10,13 @@ public class BoardManager : MonoBehaviour
     public GameObject currentCandy; //Base donde ira el sprite de los caramelos(es el cuadro cafe 5_2 de los sprites)
     public int xSize, ySize; //Variables del tamaño del tablero en "x" y "y"
 
-    private GameObject[,] candies; //Game object array del tablero, es private porque solo se usara en este script, cualquiera variable que sea asi sera private
+    private GameObject[,] candies; //Game object array del tablero, es private porque solo se usara en este script, cualquier variable que sea asi sera private
 
     public bool isShifting { get; set; } //Variable que evitara que se intercambien varios dulces a la vez y que solo sea de uno en uno, como nadie mas que este mismo manager cambiara su valor, llevara get y set
 
     private Candy selectedCandy;
+
+    public const int MinNeighborCandiesToMatch = 2; //El nombre se refiere que para los match se cuenta el actual mas 2 vecinos, asi, el codigo funcionara con 3 candys o mas. Esta variable se accede desde el script Candy de cada candy. Las constantes inician en mayusculas
     
     void Start()
     {
@@ -47,7 +49,7 @@ public class BoardManager : MonoBehaviour
             for (int y = 0; y < ySize; y++)
             {
                 GameObject newCandy = Instantiate(currentCandy, new Vector3(startX + (offset.x * x), startY + (offset.y * y), 0), currentCandy.transform.rotation); //Instancia un caramelo en tales coordenadas y con determinada rotacion(porque se multiplican por "x" y "y"?)
-                newCandy.name = string.Format("Candy [{0}][{1}]", x, y); //Le da nombre a cada candy, format es para darle el formato que tiene entre "", los datos entre los [] son los que van fuera de las "" y separados con , en el orden en el que se escriben y son el valor de las variables "x" y "y" en cada interacion de los bucles
+                newCandy.name = string.Format("Candy[{0}][{1}]", x, y); //Le da nombre a cada candy, format es para darle el formato que tiene entre "", los datos entre los [] son los que van fuera de las "" y separados con , en el orden en el que se escriben y son el valor de las variables "x" y "y" en cada interacion de los bucles
 
                 do //Haz...
                 {
@@ -59,9 +61,90 @@ public class BoardManager : MonoBehaviour
                 newCandy.GetComponent<SpriteRenderer>().sprite = sprite; //Asigna el sprite elejido anteriormente al new candy generado, o sea, aqui se indica que en lugar de mostrar el sprite del curretCandy(referenciado en el editor), mostrara los del array prefabs[]
                 newCandy.GetComponent<Candy>().id = idx; //Se obtiene el script de new candy(por que todos los candy lo tienen) y se le asigna el idx como nuevo id
 
-                newCandy.transform.parent = transform; //Indica que el parent del new candy sera el game object al que esta añadido este script, o sea, el board manager, esto para que el board manager tenga un desplegable y en el se oculte el listado de todos los candys
+                newCandy.transform.parent = this.transform; //Indica que el parent del new candy sera el game object al que esta añadido este script, o sea, el board manager, esto para que el board manager tenga un desplegable y en el se oculte el listado de todos los candys
                 candies[x, y] = newCandy; //Agrega cada candy al array, las coordenadas son el valor de las variables "x" y "y" en cada interacion de los bucles
             }
         }
+    }
+
+    public IEnumerator FindNullCandies() //Corutina que encuentra y baja los candys a los espacios que no tengan, recorriendo el array que los contiene, se llama desde el script Candy de cada candy
+    {
+        for (int x = 0; x < xSize; x++) //Bucle para la coordenada x(numero de columna)
+        {
+            for (int y = 0; y < ySize; y++) //Bucle para la coordenada y(numero de fila)
+            {
+                if (candies[x, y].GetComponent<SpriteRenderer>().sprite == null) //Si el candy que se esta checando no tiene sprite...
+                {
+                    yield return StartCoroutine(MakeCandiesFall(x, y)); //... activa la corutina que hara caer los que esten arriba y...
+                    break; //... finaliza la corrutina, esto es necesario indicarlo, si no, seguira
+                }
+            }
+        }
+
+        //Despues de haber caido y generado los nuevos candys, por cada candy en el board...
+        for (int x = 0; x < xSize; x++)
+        {
+            for (int y = 0; y < ySize; y++)
+            {
+                candies[x, y].GetComponent<Candy>().FindAllMatches(); //... se activa la funcion FindAllMatches() para ver si al caer los candys no se generan nuevos matches en otros lados
+            }
+        }
+    }
+
+    private IEnumerator MakeCandiesFall(int x, int yStart, float shiftDelay = 0.05f) //Corutina para hacer caer los candys en los espacios vacios que quedan cuando hay un match, yStart(fila) se refiere a que la corutina checara hacia arriba con x(columna) fija. Para que una de las variables de los parametros tenga un valor por default, este se indica en la  declaracion de la funcion y al llamarla no se indica de nuevo, por que ya tiene un valor
+    {
+        isShifting = true; //Vuelve isShifting true al inicio del codigo
+
+        List<SpriteRenderer> renders = new List<SpriteRenderer>(); //Lista que guarda el espacio de los candys sin sprite
+        int nullCandies = 0; //Numero de candys sin sprite
+
+        for (int y = yStart; y < ySize; y++) //Bucle que recorrera la columna hacia arriba en busca de candys sin sprites...
+        {
+            SpriteRenderer spriteRenderer = candies[x, y].GetComponent<SpriteRenderer>(); //... guarda el candy actual y obtiene su SpriteRenderer
+
+            if (spriteRenderer.sprite == null) //... checa si el candy no tiene sprite
+            {
+                nullCandies++; //... si no tiene, suma 1 a la variable nullCandies
+            }
+
+            renders.Add(spriteRenderer); //... y agrega el candy a la lista renders
+        }
+
+        for (int i = 0; i < nullCandies; i++) //Bucle que hace caer los caramelos. La cantidad de veces que se repetira sera el valor de nullCandies
+        {
+            yield return new WaitForSeconds(shiftDelay); //Espera determinados segundos(segun el parametro) antes de hacer caer otro candy
+
+            for (int j = 0; j < renders.Count - 1; j++) //Bucle que baja el sprite de arriba. La cantidad de veces que se repetira sera el numero de elementos de renders(por .Count). El -1 es porque la numeracion de elementos inicia en 0
+            {                
+                renders[j].sprite = renders[j + 1].sprite; //Baja el sprite del candy de arriba
+                renders[j + 1].sprite = GetNewCandy(x, ySize - 1); //Genera el sprite de un nuevo candy en los espacios vacios que quedan al bajar los candys. El -1 en ySize es para generar el de hasta arriba, porque si no quedaria fuera del grid
+            }
+        }
+
+        isShifting = false; //Vuelve isShifting false al inicio del codigo
+    }
+
+    private Sprite GetNewCandy(int x, int y) //Funcion para generar un nuevo candy en un espacio vacio, como regresa el sprite de un candy la funcion es tipo sprite
+    {
+        List<Sprite> newPossibleCandies = new List<Sprite>(); //Lista que guardara los posibles candys
+        newPossibleCandies.AddRange(prefabs); //Indica que los posibles candys seran los originales de la lista de prefabs agregandolos a la variable, esto en POO es copia, no referencia, por eso el contenido de newPossibleCandies no se asigna con =
+
+        //Los siguientes ifs eliminan candys de newPossibleCandies, tomando como parametro los sprites adyacentes al candy, esto para que al elegir el nuevo candy, no coincida con los adyacentes
+        if (x > 0) //Si x es mayor a 0...
+        {
+            newPossibleCandies.Remove(candies[x - 1, y].GetComponent<SpriteRenderer>().sprite); //... se elimina de newPossibleCandies el sprite que este a la IZQUIERDA del candy...
+        }
+
+        if (x < xSize - 1) //Si x es menor al tamaño de columnas(xSize)...
+        {
+            newPossibleCandies.Remove(candies[x + 1, y].GetComponent<SpriteRenderer>().sprite); //... se elimina de newPossibleCandies el sprite que este a la DERECHA del candy...
+        }
+
+        if (y > 0) //si y es mayor a 0...
+        {
+            newPossibleCandies.Remove(candies[x, y - 1].GetComponent<SpriteRenderer>().sprite); //... se elimina de newPossibleCandies el sprite que este a DEBAJO del candy...
+        }
+
+        return newPossibleCandies[Random.Range(0, newPossibleCandies.Count)]; //... y de los sprites que queden retorna uno de forma aleatoria que sera el que ira en el espacio vacio
     }
 }
