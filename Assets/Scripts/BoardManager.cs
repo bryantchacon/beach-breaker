@@ -112,6 +112,8 @@ public class BoardManager : MonoBehaviour
 
         for (int i = 0; i < nullCandies; i++) //Bucle que hace caer los caramelos. La cantidad de veces que se repetira sera el valor de nullCandies
         {
+            GUIManager.sharedInstance.Score += 10; //Aumenta en 10 el score
+
             yield return new WaitForSeconds(shiftDelay); //Espera determinados segundos(segun el parametro) antes de hacer caer otro candy
 
             for (int j = 0; j < renders.Count - 1; j++) //Bucle que baja el sprite de arriba. La cantidad de veces que se repetira sera el numero de elementos de renders(por .Count). El -1 es porque la numeracion de elementos inicia en 0

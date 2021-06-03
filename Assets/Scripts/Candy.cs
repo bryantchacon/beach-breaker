@@ -64,7 +64,8 @@ public class Candy : MonoBehaviour
                     SwapSprite(previousSelected); //... intercambia el sprite de los candys recibiendo como parametro el previousSelected, o sea, el primer candy seleccionado, esta funcion se activa al darle clic/tap al segundo candy(SwapSprite primero checa que el segundo seleccionado no sea igual al primero seleccionado para asi poder hacer el swipe)...
                     previousSelected.FindAllMatches(); //... busca y elimina los candys que hagan match si el PRIMERO seleccionado es el que lo provoca
                     previousSelected.DeselectCandy(); //... el primer candy seleccionado se deselecciona
-                    FindAllMatches(); //... busca y elimina los candys que hagan match si el SEGUNDO seleccionado es el que lo provoca        
+                    FindAllMatches(); //... busca y elimina los candys que hagan match si el SEGUNDO seleccionado es el que lo provoca
+                    GUIManager.sharedInstance.Moves--; //Disminuye en 1 los movimientos
                 }
                 else //Si no, si ninguno se puede intercambiar por el, segun la lista donde seguarda(GetAllNeighbors()) o por que los caramelos estan en las esquinas que rodean al candy o lejos de el...
                 {
