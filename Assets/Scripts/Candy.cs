@@ -122,7 +122,7 @@ public class Candy : MonoBehaviour
         return neighbors; //Y retorna la lista de game objects de neighbors
     }
     
-    private bool CanSwipe() //Funcion que indica con true o false si los candys se pueden intercambiar
+    private bool CanSwipe() //Funcion que indica con true o false si los candys se pueden intercambiar, al ejecutar el codigo que contiene
     {
         return GetAllNeighbors().Contains(previousSelected.gameObject); //Checa si la lista que retorna GetAllNeighbors() contiene el primer candy seleccionado, si si lo contiene retorna true, si no, false
     }
@@ -168,7 +168,7 @@ public class Candy : MonoBehaviour
 
     public void FindAllMatches() //Activa el encontrar y eliminar las coincidencias de caramelos empezando por usar aqui la funcion ClearMatch() y dentro de ella la funcion FindMatch(). Esta funcion se activa desde cualquiera de los dos candys que hacen swipe
     {
-        if (spriteRenderer.sprite == null) //Si el segundo caramelo seleccionado no tiene imagen...
+        if (spriteRenderer.sprite == null) //Si el segundo caramelo seleccionado(este) no tiene imagen...
         {
             return; //... no hara nada
         }

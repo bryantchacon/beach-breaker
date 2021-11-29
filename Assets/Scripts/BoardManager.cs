@@ -10,7 +10,7 @@ public class BoardManager : MonoBehaviour
     public GameObject currentCandy; //Base donde ira el sprite de los caramelos(es el cuadro cafe 5_2 de los sprites)
     public int xSize, ySize; //Variables del tamaño del tablero en "x" y "y"
 
-    private GameObject[,] candies; //Game object array del tablero, es private porque solo se usara en este script, cualquier variable que sea asi sera private
+    private GameObject[,] candies; //Matriz de game objects del tablero, es private porque solo se usara en este script, cualquier variable que sea asi sera private
 
     public bool isShifting { get; set; } //Variable que evitara que se intercambien varios dulces a la vez y que solo sea de uno en uno, como nadie mas que este mismo manager cambiara su valor, llevara get y set
 
